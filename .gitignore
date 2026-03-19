@@ -1,0 +1,18 @@
+# Environment secrets — never commit
+backend/.env
+
+# Node
+node_modules/
+backend/dist/
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store

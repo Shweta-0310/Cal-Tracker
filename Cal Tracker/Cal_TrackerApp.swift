@@ -1,17 +1,23 @@
-//
-//  Cal_TrackerApp.swift
-//  Cal Tracker
-//
-//  Created by Shweta Yadav on 18/03/26.
-//
-
 import SwiftUI
 
 @main
 struct Cal_TrackerApp: App {
+    @StateObject private var authVM = AuthViewModel()
+    @AppStorage("hasLoggedFirstMeal") private var hasLoggedFirstMeal = false
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if !authVM.isAuthenticated {
+                    LoginView()
+                } else if !hasLoggedFirstMeal {
+                    WelcomeView()
+                } else {
+                    DashboardView()
+                }
+            }
+            .environmentObject(authVM)
+            .task { await authVM.checkSession() }
         }
     }
 }

@@ -1,0 +1,26 @@
+{
+  "name": "cal-tracker-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.4.5",
+    "@google/generative-ai": "^0.3.0",
+    "cors": "^2.8.5",
+    "date-fns": "^3.3.1",
+    "express": "^4.18.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.5",
+    "nodemon": "^3.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
