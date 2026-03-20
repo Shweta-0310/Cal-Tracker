@@ -20,9 +20,8 @@ struct LoginView: View {
                 Spacer()
 
                 Text("Keep You Growing")
-                    .font(.custom("PlayfairDisplay-Bold", size: 36,))
+                    .font(.custom("PlayfairDisplay-Bold", size: 36))
                     .foregroundStyle(.white)
-                    .padding(.top, 0)
 
                 VStack(spacing: 48) {
                     VStack(spacing: 16) {
@@ -55,8 +54,5 @@ struct LoginView: View {
 
 #Preview {
     LoginView()
-        .environmentObject({
-            let vm = AuthViewModel()
-            return vm
-        }())
+        .environmentObject(AuthViewModel())
 }

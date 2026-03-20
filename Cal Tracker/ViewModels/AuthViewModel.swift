@@ -9,13 +9,10 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let userNameKey = "userName"
-    private let userIDKey = "userID"
 
-    /// Persistent local user ID — generated once, stored forever.
+    /// Persistent device-based user ID — generated once, stored forever.
     static var userID: String {
-        if let existing = UserDefaults.standard.string(forKey: "userID") {
-            return existing
-        }
+        if let existing = UserDefaults.standard.string(forKey: "userID") { return existing }
         let new = UUID().uuidString
         UserDefaults.standard.set(new, forKey: "userID")
         return new
@@ -34,7 +31,6 @@ class AuthViewModel: ObservableObject {
         isLoading = true
         userName = trimmed
         UserDefaults.standard.set(trimmed, forKey: userNameKey)
-        // Ensure a stable user ID exists
         _ = AuthViewModel.userID
         isAuthenticated = true
         isLoading = false

@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { supabase } from '../services/supabaseClient'
 import { analyzeFood } from '../services/geminiService'
 
-export async function createMeal(req: Request, res: Response) {
+export async function analyzeMeal(req: Request, res: Response) {
   try {
     const { imageData, mimeType } = z.object({
       imageData: z.string(),
@@ -20,21 +20,50 @@ export async function createMeal(req: Request, res: Response) {
       throw e
     }
 
-    // TEMP: skip Supabase, return Gemini result directly
-    return res.status(201).json({
-      id: '00000000-0000-0000-0000-000000000000',
-      user_id: null,
-      image_url: null,
+    return res.json({
       meal_name: nutrition.mealName,
       calories: nutrition.calories,
       protein: nutrition.protein,
       carbs: nutrition.carbs,
       fats: nutrition.fats,
       fiber: nutrition.fiber,
-      sugar: nutrition.sugar,
-      logged_at: new Date().toISOString(),
-      created_at: new Date().toISOString()
+      sugar: nutrition.sugar
     })
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message })
+  }
+}
+
+export async function createMeal(req: Request, res: Response) {
+  try {
+    const body = z.object({
+      meal_name: z.string().optional(),
+      calories: z.number(),
+      protein: z.number(),
+      carbs: z.number(),
+      fats: z.number(),
+      fiber: z.number(),
+      sugar: z.number()
+    }).parse(req.body)
+
+    const { data, error } = await supabase
+      .from('meals')
+      .insert({
+        user_id: req.userId,
+        meal_name: body.meal_name,
+        calories: body.calories,
+        protein: body.protein,
+        carbs: body.carbs,
+        fats: body.fats,
+        fiber: body.fiber,
+        sugar: body.sugar,
+        logged_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (error) return res.status(500).json({ error: error.message })
+    return res.status(201).json(data)
   } catch (e: any) {
     return res.status(500).json({ error: e.message })
   }

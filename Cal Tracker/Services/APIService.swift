@@ -49,10 +49,44 @@ class APIService {
         return data
     }
 
-    func createMeal(imageData: Data, mimeType: String = "image/jpeg") async throws -> Meal {
+    /// Calls Gemini to analyze the image but does NOT persist anything.
+    func analyzeMeal(imageData: Data, mimeType: String = "image/jpeg") async throws -> Meal {
+        struct AnalyzeResponse: Decodable {
+            let mealName: String?
+            let calories: Double
+            let protein: Double
+            let carbs: Double
+            let fats: Double
+            let fiber: Double
+            let sugar: Double
+            enum CodingKeys: String, CodingKey {
+                case mealName = "meal_name", calories, protein, carbs, fats, fiber, sugar
+            }
+        }
         let body: [String: Any] = [
             "imageData": imageData.base64EncodedString(),
             "mimeType": mimeType
+        ]
+        let data = try await request("/meals/analyze", method: "POST", body: body)
+        let r = try APIService.iso.decode(AnalyzeResponse.self, from: data)
+        // Build a temporary Meal for display (no real ID/date yet)
+        return Meal(id: UUID(), userId: nil, imageUrl: nil,
+                    mealName: r.mealName, calories: r.calories,
+                    protein: r.protein, carbs: r.carbs, fats: r.fats,
+                    fiber: r.fiber, sugar: r.sugar,
+                    loggedAt: Date(), createdAt: nil)
+    }
+
+    /// Persists the confirmed meal to Supabase and returns the saved record.
+    func createMeal(from meal: Meal) async throws -> Meal {
+        let body: [String: Any] = [
+            "meal_name": meal.mealName ?? "Meal",
+            "calories": meal.calories,
+            "protein": meal.protein,
+            "carbs": meal.carbs,
+            "fats": meal.fats,
+            "fiber": meal.fiber,
+            "sugar": meal.sugar
         ]
         let data = try await request("/meals", method: "POST", body: body)
         return try APIService.iso.decode(Meal.self, from: data)

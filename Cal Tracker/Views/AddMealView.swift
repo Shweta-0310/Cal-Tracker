@@ -12,6 +12,7 @@ struct AddMealView: View {
     @State private var selectedImage: UIImage?
     @State private var result: Meal?
     @State private var isAnalyzing = false
+    @State private var isSaving = false
     @State private var errorMessage: String?
 
     private let goals = GoalsStore.load()
@@ -64,11 +65,11 @@ struct AddMealView: View {
 
                         // Macro progress rows
                         VStack(spacing: 20) {
-                            MacroProgressRow(label: "Calories", value: result.calories, goal: goals.calories, color: Color(hex: "#7B68EE"))
-                            MacroProgressRow(label: "Protein",  value: result.protein,  goal: goals.protein,  color: Color(hex: "#5BC8D5"))
-                            MacroProgressRow(label: "Fats",     value: result.fats,     goal: goals.fats,     color: Color(hex: "#F06292"))
-                            MacroProgressRow(label: "Carbs",    value: result.carbs,    goal: goals.carbs,    color: Color(hex: "#FFAA5C"))
-                            MacroProgressRow(label: "Others",   value: result.others,   goal: goals.fiber,    color: Color(hex: "#FFD166"))
+                            MacroProgressRow(label: "Calories", value: result.calories, goal: goals.calories, color: MacroColor.calories)
+                            MacroProgressRow(label: "Protein",  value: result.protein,  goal: goals.protein,  color: MacroColor.protein)
+                            MacroProgressRow(label: "Fats",     value: result.fats,     goal: goals.fats,     color: MacroColor.fats)
+                            MacroProgressRow(label: "Carbs",    value: result.carbs,    goal: goals.carbs,    color: MacroColor.carbs)
+                            MacroProgressRow(label: "Others",   value: result.others,   goal: goals.fiber,    color: MacroColor.others)
                         }
                         .padding(.horizontal, 24)
                     }
@@ -84,23 +85,25 @@ struct AddMealView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if result != nil {
-                Button("Confirm and Save") {
-                    if let result {
-                        mealStore.addMeal(result)
-                        hasLoggedFirstMeal = true
-                        Task {
-                            await onConfirm?()
-                            dismiss()
-                        }
+                Button {
+                    Task { await save() }
+                } label: {
+                    if isSaving {
+                        ProgressView()
+                            .tint(.white)
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                    } else {
+                        Text("Confirm and Save")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(maxWidth: .infinity, minHeight: 50)
                     }
                 }
-                .font(.system(size: 17, weight: .semibold))
-                .frame(maxWidth: .infinity, minHeight: 50)
                 .background(Color.black)
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)
+                .disabled(isSaving)
             } else if selectedImage != nil {
                 Button {
                     Task { await analyze() }
@@ -131,11 +134,27 @@ struct AddMealView: View {
         isAnalyzing = true
         errorMessage = nil
         do {
-            result = try await APIService.shared.createMeal(imageData: jpeg, mimeType: "image/jpeg")
+            result = try await APIService.shared.analyzeMeal(imageData: jpeg, mimeType: "image/jpeg")
         } catch {
             errorMessage = error.localizedDescription
         }
         isAnalyzing = false
+    }
+
+    private func save() async {
+        guard let draft = result else { return }
+        isSaving = true
+        errorMessage = nil
+        do {
+            let saved = try await APIService.shared.createMeal(from: draft)
+            mealStore.addMeal(saved)
+            hasLoggedFirstMeal = true
+            await onConfirm?()
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isSaving = false
     }
 }
 

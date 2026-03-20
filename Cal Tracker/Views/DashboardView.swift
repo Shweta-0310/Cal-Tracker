@@ -26,34 +26,42 @@ struct DashboardView: View {
 
                     // Donut chart + Macro progress rows
                     VStack(spacing: 56) {
-                        // Donut chart
-                        SegmentedDonutView(totals: mealStore.totals, mealCount: mealStore.meals.count)
+                        SegmentedDonutView(totals: vm.totals, mealCount: vm.mealCount)
                             .frame(width: 220, height: 220)
 
-                        // Macro progress rows
                         VStack(spacing: 20) {
-                            MacroProgressRow(label: "Calories", value: mealStore.totals.calories, goal: vm.goals.calories, color: Color(hex: "#7B68EE"))
-                            MacroProgressRow(label: "Protein",  value: mealStore.totals.protein,  goal: vm.goals.protein,  color: Color(hex: "#5BC8D5"))
-                            MacroProgressRow(label: "Fats",     value: mealStore.totals.fats,     goal: vm.goals.fats,     color: Color(hex: "#F06292"))
-                            MacroProgressRow(label: "Carbs",    value: mealStore.totals.carbs,    goal: vm.goals.carbs,    color: Color(hex: "#FFAA5C"))
-                            MacroProgressRow(label: "Others",   value: mealStore.totals.others,   goal: vm.goals.others,   color: Color(hex: "#FFD166"))
+                            MacroProgressRow(label: "Calories", value: vm.totals.calories, goal: vm.goals.calories, color: MacroColor.calories)
+                            MacroProgressRow(label: "Protein",  value: vm.totals.protein,  goal: vm.goals.protein,  color: MacroColor.protein)
+                            MacroProgressRow(label: "Fats",     value: vm.totals.fats,     goal: vm.goals.fats,     color: MacroColor.fats)
+                            MacroProgressRow(label: "Carbs",    value: vm.totals.carbs,    goal: vm.goals.carbs,    color: MacroColor.carbs)
+                            MacroProgressRow(label: "Others",   value: vm.totals.others,   goal: vm.goals.fiber,    color: MacroColor.others)
                         }
                     }
 
                     // Meal list
-                    ForEach(mealStore.meals) { meal in
-                        NavigationLink {
-                            MealDetailView(meal: meal) { }
-                        } label: {
-                            MealCardView(meal: meal)
+                    if vm.isLoading {
+                        ProgressView()
+                    } else {
+                        ForEach(vm.meals) { meal in
+                            NavigationLink {
+                                MealDetailView(meal: meal) {
+                                    Task { await vm.load() }
+                                }
+                            } label: {
+                                MealCardView(meal: meal)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.top)
                 .padding(.horizontal, 24)
             }
             .toolbar(.hidden, for: .navigationBar)
+            .task { await vm.load() }
+            .onChange(of: vm.currentDate) { _, _ in
+                Task { await vm.load() }
+            }
             .sheet(isPresented: $showSettings) {
                 SettingsView(goals: $vm.goals)
             }
@@ -71,7 +79,9 @@ struct DashboardView: View {
                     .padding(.bottom, 8)
             }
             .sheet(isPresented: $showAddMeal) {
-                AddMealView()
+                AddMealView(onConfirm: {
+                    await vm.load()
+                })
             }
         }
     }

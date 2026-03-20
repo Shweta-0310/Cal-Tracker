@@ -3,8 +3,9 @@ import { authMiddleware } from '../middleware/auth'
 import * as mealController from '../controllers/mealController'
 
 const router = Router()
-// router.use(authMiddleware) // TEMP: auth disabled for Gemini testing
+router.use(authMiddleware)
 
+router.post('/analyze', mealController.analyzeMeal)
 router.post('/', mealController.createMeal)
 router.get('/', mealController.getMeals)
 router.get('/:id', mealController.getMeal)
