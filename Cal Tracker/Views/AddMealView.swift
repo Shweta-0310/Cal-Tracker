@@ -14,69 +14,115 @@ struct AddMealView: View {
     @State private var isAnalyzing = false
     @State private var errorMessage: String?
 
+    private let goals = GoalsStore.load()
+
     var body: some View {
-        VStack(spacing: 16) {
-            PhotosPicker(selection: $selectedItem, matching: .images) {
-                if let image = selectedImage {
-                    Image(uiImage: image)
-                        .resizable().scaledToFit().frame(height: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(height: 200)
-                        .overlay(Image(systemName: "photo").font(.largeTitle))
-                }
-            }
-            .onChange(of: selectedItem) { _, item in
-                Task {
-                    if let data = try? await item?.loadTransferable(type: Data.self) {
-                        selectedImage = UIImage(data: data)
-                        result = nil
+        ScrollView {
+            VStack(spacing: 24) {
+                // Meal image
+                PhotosPicker(selection: $selectedItem, matching: .images) {
+                    if let image = selectedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 300)
+                            .clipped()
+                    } else {
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(Color(.systemGray5))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 300)
+                            .overlay(
+                                VStack(spacing: 8) {
+                                    Image(systemName: "photo")
+                                        .font(.system(size: 40))
+                                        .foregroundStyle(.secondary)
+                                    Text("Tap to select a photo")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(.secondary)
+                                }
+                            )
                     }
                 }
-            }
-
-            if let result {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(result.mealName ?? "Meal").font(.headline)
-                    HStack { Text("Calories"); Spacer(); Text("\(Int(result.calories)) kcal") }
-                    HStack { Text("Protein");  Spacer(); Text("\(Int(result.protein))g") }
-                    HStack { Text("Carbs");    Spacer(); Text("\(Int(result.carbs))g") }
-                    HStack { Text("Fats");     Spacer(); Text("\(Int(result.fats))g") }
-                    HStack { Text("Others");   Spacer(); Text("\(Int(result.others))g") }
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                Button("Confirm & Save") {
-                    mealStore.addMeal(result)
-                    hasLoggedFirstMeal = true
+                .onChange(of: selectedItem) { _, item in
                     Task {
-                        await onConfirm?()
-                        dismiss()
+                        if let data = try? await item?.loadTransferable(type: Data.self) {
+                            selectedImage = UIImage(data: data)
+                            result = nil
+                        }
                     }
                 }
-                .buttonStyle(.borderedProminent)
-            }
 
-            if let errorMessage {
-                Text(errorMessage).foregroundStyle(.red).font(.caption)
-            }
+                if let result {
+                    VStack(spacing: 24) {
+                        // Meal name
+                        Text(result.mealName ?? "Meal")
+                            .font(.system(size: 20, weight: .semibold))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
 
-            if selectedImage != nil && result == nil {
+                        // Macro progress rows
+                        VStack(spacing: 20) {
+                            MacroProgressRow(label: "Calories", value: result.calories, goal: goals.calories, color: Color(hex: "#7B68EE"))
+                            MacroProgressRow(label: "Protein",  value: result.protein,  goal: goals.protein,  color: Color(hex: "#5BC8D5"))
+                            MacroProgressRow(label: "Fats",     value: result.fats,     goal: goals.fats,     color: Color(hex: "#F06292"))
+                            MacroProgressRow(label: "Carbs",    value: result.carbs,    goal: goals.carbs,    color: Color(hex: "#FFAA5C"))
+                            MacroProgressRow(label: "Others",   value: result.others,   goal: goals.fiber,    color: Color(hex: "#FFD166"))
+                        }
+                        .padding(.horizontal, 24)
+                    }
+                }
+
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                        .padding(.horizontal, 24)
+                }
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if result != nil {
+                Button("Confirm and Save") {
+                    if let result {
+                        mealStore.addMeal(result)
+                        hasLoggedFirstMeal = true
+                        Task {
+                            await onConfirm?()
+                            dismiss()
+                        }
+                    }
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .frame(maxWidth: .infinity, minHeight: 50)
+                .background(Color.black)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
+            } else if selectedImage != nil {
                 Button {
                     Task { await analyze() }
                 } label: {
-                    if isAnalyzing { ProgressView() }
-                    else { Text("Analyze Meal").frame(maxWidth: .infinity) }
+                    if isAnalyzing {
+                        ProgressView()
+                            .tint(.white)
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                    } else {
+                        Text("Analyze Meal")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
+                .background(Color.black)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
                 .disabled(isAnalyzing)
             }
         }
-        .padding()
     }
 
     private func analyze() async {
@@ -95,9 +141,5 @@ struct AddMealView: View {
 
 #Preview("Empty State") {
     AddMealView()
-}
-
-#Preview("With Result") {
-    let view = AddMealView()
-    return view
+        .environmentObject(MealStore())
 }

@@ -38,7 +38,6 @@ struct DashboardView: View {
                             MacroProgressRow(label: "Carbs",    value: mealStore.totals.carbs,    goal: vm.goals.carbs,    color: Color(hex: "#FFAA5C"))
                             MacroProgressRow(label: "Others",   value: mealStore.totals.others,   goal: vm.goals.others,   color: Color(hex: "#FFD166"))
                         }
-                        .padding(.horizontal)
                     }
 
                     // Meal list
@@ -48,9 +47,11 @@ struct DashboardView: View {
                         } label: {
                             MealCardView(meal: meal)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.top)
+                .padding(.horizontal, 24)
             }
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) {
@@ -66,7 +67,7 @@ struct DashboardView: View {
                     .background(Color.black)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .padding(.horizontal)
+                    .padding(.horizontal, 24)
                     .padding(.bottom, 8)
             }
             .sheet(isPresented: $showAddMeal) {
