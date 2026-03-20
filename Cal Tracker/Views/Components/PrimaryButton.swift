@@ -19,8 +19,9 @@ struct PrimaryButton: View {
                     .frame(minHeight: 44)
             }
         }
-        .tint(Color(red: 22/255, green: 22/255, blue: 22/255))
+        .tint(.black)
         .buttonStyle(.borderedProminent)
-        .disabled(isLoading || isDisabled)
+        .opacity(isLoading || isDisabled ? 0.7 : 1.0)
+        .allowsHitTesting(!(isLoading || isDisabled))
     }
 }

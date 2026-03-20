@@ -13,7 +13,7 @@ struct MacroProgressRow: View {
         let filled = Int(progress * Double(segments))
 
         HStack(spacing: 8) {
-            Text(label).frame(width: 70, alignment: .leading).font(.subheadline)
+            Text(label).frame(width: 70, alignment: .leading).font(.system(size: 16))
 
             HStack(spacing: 3) {
                 ForEach(0..<segments, id: \.self) { i in
@@ -24,13 +24,13 @@ struct MacroProgressRow: View {
             }
 
             Text("\(Int(progress * 100))%")
-                .font(.caption).frame(width: 36, alignment: .trailing)
+                .font(.system(size: 14)).frame(width: 36, alignment: .trailing)
         }
     }
 }
 
 #Preview {
-    VStack(spacing: 8) {
+    VStack(spacing: 16) {
         MacroProgressRow(label: "Calories", value: 1400, goal: 2000, color: .orange)
         MacroProgressRow(label: "Protein",  value: 80,   goal: 150,  color: .blue)
         MacroProgressRow(label: "Fats",     value: 45,   goal: 65,   color: .pink)

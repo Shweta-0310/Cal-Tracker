@@ -11,9 +11,9 @@ struct DashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 56) {
                     // Date navigator
-                    HStack {
+                    HStack(spacing: 16) {
                         Button { vm.goToPreviousDay() } label: {
                             Image(systemName: "chevron.left")
                         }
@@ -24,18 +24,22 @@ struct DashboardView: View {
                         .disabled(vm.isToday)
                     }
 
-                    // Donut chart
-                    SegmentedDonutView(totals: mealStore.totals, mealCount: mealStore.meals.count)
-                        .frame(width: 200, height: 200)
+                    // Donut chart + Macro progress rows
+                    VStack(spacing: 56) {
+                        // Donut chart
+                        SegmentedDonutView(totals: mealStore.totals, mealCount: mealStore.meals.count)
+                            .frame(width: 220, height: 220)
 
-                    // Macro progress rows
-                    VStack(spacing: 8) {
-                        MacroProgressRow(label: "Calories", value: mealStore.totals.calories, goal: vm.goals.calories, color: .orange)
-                        MacroProgressRow(label: "Protein",  value: mealStore.totals.protein,  goal: vm.goals.protein,  color: .blue)
-                        MacroProgressRow(label: "Fats",     value: mealStore.totals.fats,     goal: vm.goals.fats,     color: .pink)
-                        MacroProgressRow(label: "Carbs",    value: mealStore.totals.carbs,    goal: vm.goals.carbs,    color: Color(hex: "#FFBF69"))
-                        MacroProgressRow(label: "Others",   value: mealStore.totals.others,   goal: vm.goals.others,   color: .purple)
-                    }.padding(.horizontal)
+                        // Macro progress rows
+                        VStack(spacing: 20) {
+                            MacroProgressRow(label: "Calories", value: mealStore.totals.calories, goal: vm.goals.calories, color: Color(hex: "#7B68EE"))
+                            MacroProgressRow(label: "Protein",  value: mealStore.totals.protein,  goal: vm.goals.protein,  color: Color(hex: "#5BC8D5"))
+                            MacroProgressRow(label: "Fats",     value: mealStore.totals.fats,     goal: vm.goals.fats,     color: Color(hex: "#F06292"))
+                            MacroProgressRow(label: "Carbs",    value: mealStore.totals.carbs,    goal: vm.goals.carbs,    color: Color(hex: "#FFAA5C"))
+                            MacroProgressRow(label: "Others",   value: mealStore.totals.others,   goal: vm.goals.others,   color: Color(hex: "#FFD166"))
+                        }
+                        .padding(.horizontal)
+                    }
 
                     // Meal list
                     ForEach(mealStore.meals) { meal in
@@ -46,24 +50,9 @@ struct DashboardView: View {
                         }
                     }
                 }
-                .padding()
+                .padding(.top)
             }
-            .navigationTitle("Cal Tracker")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Sign Out") { Task { await authVM.signOut() } }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack {
-                        Button { showWeekly = true } label: {
-                            Image(systemName: "chart.bar")
-                        }
-                        Button { showSettings = true } label: {
-                            Image(systemName: "gearshape")
-                        }
-                    }
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) {
                 SettingsView(goals: $vm.goals)
             }
@@ -72,8 +61,13 @@ struct DashboardView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 Button("Upload Meal Photo") { showAddMeal = true }
-                    .buttonStyle(.borderedProminent)
-                    .padding()
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(Color.black)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
             }
             .sheet(isPresented: $showAddMeal) {
                 AddMealView()
@@ -90,4 +84,5 @@ struct DashboardView: View {
             vm.isAuthenticated = true
             return vm
         }())
+        .environmentObject(MealStore())
 }

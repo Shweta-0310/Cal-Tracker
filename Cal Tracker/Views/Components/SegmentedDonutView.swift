@@ -7,12 +7,13 @@ struct SegmentedDonutView: View {
     var body: some View {
         ZStack {
             let segments: [(Double, Color)] = [
-                (totals.protein, .blue),
-                (totals.fats,    Color(hex: "#FF6B8A")),
-                (totals.carbs,   Color(hex: "#FFBF69")),
-                (totals.others,  .purple)
+                (totals.protein, Color(hex: "#C3AEF5")),
+                (totals.fats,    Color(hex: "#ADE8F4")),
+                (totals.carbs,   Color(hex: "#F4B5A0")),
+                (totals.others,  Color(hex: "#F4A0BF"))
             ]
             let total = segments.reduce(0.0) { $0 + $1.0 }
+
             let gap = 0.02
             var startAngle = -90.0
 
@@ -25,9 +26,10 @@ struct SegmentedDonutView: View {
                 let _ = { startAngle += sweep + gap * 360 }()
             }
 
-            VStack {
-                Text("\(mealCount)").font(.title.bold())
-                Text("Total Meal").font(.caption).foregroundStyle(.secondary)
+            VStack(spacing: 4) {
+                Text(String(format: "%02d", mealCount))
+                    .font(.system(size: 40, weight: .regular))
+                Text("Total Meal").font(.system(size: 14)).foregroundStyle(.secondary)
             }
         }
     }

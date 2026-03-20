@@ -22,11 +22,12 @@ struct LoginView: View {
                 Text("Keep You Growing")
                     .font(.custom("PlayfairDisplay-Bold", size: 36,))
                     .foregroundStyle(.white)
+                    .padding(.top, 0)
 
-                VStack(spacing: 32) {
+                VStack(spacing: 48) {
                     VStack(spacing: 16) {
                         Text("What's your name?")
-                            .font(.system(size: 24, weight: .semibold))
+                            .font(.system(size: 20, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.85))
 
                         AppTextField(placeholder: "Your name", text: $name)
