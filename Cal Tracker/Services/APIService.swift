@@ -1,12 +1,21 @@
 import Foundation
-import Supabase
 
 class APIService {
     static let shared = APIService()
 
     static let iso: JSONDecoder = {
         let d = JSONDecoder()
-        d.dateDecodingStrategy = .iso8601
+        d.dateDecodingStrategy = .custom { decoder in
+            let str = try decoder.singleValueContainer().decode(String.self)
+            let withMS = ISO8601DateFormatter()
+            withMS.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = withMS.date(from: str) { return date }
+            let withoutMS = ISO8601DateFormatter()
+            withoutMS.formatOptions = [.withInternetDateTime]
+            if let date = withoutMS.date(from: str) { return date }
+            throw DecodingError.dataCorruptedError(in: try decoder.singleValueContainer(),
+                debugDescription: "Invalid date: \(str)")
+        }
         return d
     }()
 
@@ -21,21 +30,22 @@ class APIService {
             throw URLError(.badURL)
         }
 
-        let session = SupabaseManager.shared.auth.currentSession
-        guard let token = session?.accessToken else {
-            throw URLError(.userAuthenticationRequired)
-        }
-
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue(AuthViewModel.userID, forHTTPHeaderField: "X-User-ID")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if let body {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+                ?? "Server error \(http.statusCode)"
+            throw NSError(domain: "APIError", code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: msg])
+        }
         return data
     }
 

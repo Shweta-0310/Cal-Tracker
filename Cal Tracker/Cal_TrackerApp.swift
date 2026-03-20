@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct Cal_TrackerApp: App {
     @StateObject private var authVM = AuthViewModel()
+    @StateObject private var mealStore = MealStore()
     @AppStorage("hasLoggedFirstMeal") private var hasLoggedFirstMeal = false
 
     var body: some Scene {
@@ -17,6 +18,7 @@ struct Cal_TrackerApp: App {
                 }
             }
             .environmentObject(authVM)
+            .environmentObject(mealStore)
             .task { await authVM.checkSession() }
         }
     }

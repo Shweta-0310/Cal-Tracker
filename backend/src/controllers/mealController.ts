@@ -20,25 +20,21 @@ export async function createMeal(req: Request, res: Response) {
       throw e
     }
 
-    const { data, error } = await supabase
-      .from('meals')
-      .insert({
-        user_id: req.userId,
-        image_url: null,
-        meal_name: nutrition.mealName,
-        calories: nutrition.calories,
-        protein: nutrition.protein,
-        carbs: nutrition.carbs,
-        fats: nutrition.fats,
-        fiber: nutrition.fiber,
-        sugar: nutrition.sugar,
-        logged_at: new Date().toISOString()
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return res.status(201).json(data)
+    // TEMP: skip Supabase, return Gemini result directly
+    return res.status(201).json({
+      id: '00000000-0000-0000-0000-000000000000',
+      user_id: null,
+      image_url: null,
+      meal_name: nutrition.mealName,
+      calories: nutrition.calories,
+      protein: nutrition.protein,
+      carbs: nutrition.carbs,
+      fats: nutrition.fats,
+      fiber: nutrition.fiber,
+      sugar: nutrition.sugar,
+      logged_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
+    })
   } catch (e: any) {
     return res.status(500).json({ error: e.message })
   }

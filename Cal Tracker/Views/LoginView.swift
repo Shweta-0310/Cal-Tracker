@@ -12,47 +12,42 @@ struct LoginView: View {
                 .ignoresSafeArea()
 
             LinearGradient(
-                colors: [.black.opacity(0.5), .black.opacity(0.1)],
+                colors: [.black.opacity(0.5), .black.opacity(0.5)],
                 startPoint: .bottom, endPoint: .top
             ).ignoresSafeArea()
 
-            VStack(spacing: 16) {
+            VStack(spacing: 56) {
                 Spacer()
 
-                Text("Cal Tracker")
-                    .font(.largeTitle.bold())
+                Text("Keep You Growing")
+                    .font(.custom("PlayfairDisplay-Bold", size: 36,))
                     .foregroundStyle(.white)
 
-                Text("What's your name?")
-                    .foregroundStyle(.white.opacity(0.85))
+                VStack(spacing: 32) {
+                    VStack(spacing: 16) {
+                        Text("What's your name?")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.85))
 
-                TextField("Your name", text: $name)
-                    .textFieldStyle(.roundedBorder)
-                    .autocapitalization(.words)
-                    .disableAutocorrection(true)
-                    .multilineTextAlignment(.center)
+                        AppTextField(placeholder: "Your name", text: $name)
+                    }
 
-                if let err = authVM.errorMessage {
-                    Text(err).foregroundStyle(.red).font(.caption)
-                }
+                    if let err = authVM.errorMessage {
+                        Text(err).foregroundStyle(.red).font(.caption)
+                    }
 
-                Button {
-                    Task { await authVM.signInWithName(name) }
-                } label: {
-                    if authVM.isLoading {
-                        ProgressView()
-                    } else {
-                        Text("Get Started")
-                            .font(.system(size: 17, weight: .semibold))
-                            .frame(maxWidth: .infinity)
+                    PrimaryButton(
+                        title: "Get Started",
+                        isLoading: authVM.isLoading,
+                        isDisabled: name.trimmingCharacters(in: .whitespaces).isEmpty
+                    ) {
+                        Task { await authVM.signInWithName(name) }
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(authVM.isLoading || name.trimmingCharacters(in: .whitespaces).isEmpty)
 
                 Spacer()
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 64)
         }
     }
 }

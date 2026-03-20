@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var mealStore: MealStore
     @StateObject private var vm = DashboardViewModel()
     @State private var showAddMeal = false
     @State private var showSettings = false
@@ -24,22 +25,22 @@ struct DashboardView: View {
                     }
 
                     // Donut chart
-                    SegmentedDonutView(totals: vm.totals, mealCount: vm.mealCount)
+                    SegmentedDonutView(totals: mealStore.totals, mealCount: mealStore.meals.count)
                         .frame(width: 200, height: 200)
 
                     // Macro progress rows
                     VStack(spacing: 8) {
-                        MacroProgressRow(label: "Calories", value: vm.totals.calories, goal: vm.goals.calories, color: .orange)
-                        MacroProgressRow(label: "Protein",  value: vm.totals.protein,  goal: vm.goals.protein,  color: .blue)
-                        MacroProgressRow(label: "Fats",     value: vm.totals.fats,     goal: vm.goals.fats,     color: .pink)
-                        MacroProgressRow(label: "Carbs",    value: vm.totals.carbs,    goal: vm.goals.carbs,    color: Color(hex: "#FFBF69"))
-                        MacroProgressRow(label: "Others",   value: vm.totals.others,   goal: vm.goals.others,   color: .purple)
+                        MacroProgressRow(label: "Calories", value: mealStore.totals.calories, goal: vm.goals.calories, color: .orange)
+                        MacroProgressRow(label: "Protein",  value: mealStore.totals.protein,  goal: vm.goals.protein,  color: .blue)
+                        MacroProgressRow(label: "Fats",     value: mealStore.totals.fats,     goal: vm.goals.fats,     color: .pink)
+                        MacroProgressRow(label: "Carbs",    value: mealStore.totals.carbs,    goal: vm.goals.carbs,    color: Color(hex: "#FFBF69"))
+                        MacroProgressRow(label: "Others",   value: mealStore.totals.others,   goal: vm.goals.others,   color: .purple)
                     }.padding(.horizontal)
 
                     // Meal list
-                    ForEach(vm.meals) { meal in
+                    ForEach(mealStore.meals) { meal in
                         NavigationLink {
-                            MealDetailView(meal: meal) { await vm.load() }
+                            MealDetailView(meal: meal) { }
                         } label: {
                             MealCardView(meal: meal)
                         }
@@ -75,10 +76,8 @@ struct DashboardView: View {
                     .padding()
             }
             .sheet(isPresented: $showAddMeal) {
-                AddMealView { await vm.load() }
+                AddMealView()
             }
-            .task { await vm.load() }
-            .onChange(of: vm.currentDate) { _, _ in Task { await vm.load() } }
         }
     }
 }

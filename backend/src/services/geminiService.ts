@@ -14,20 +14,21 @@ export interface NutritionResult {
 }
 
 export async function analyzeFood(imageData: string, mimeType: string): Promise<NutritionResult> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-  const prompt = `Analyze this food image and return ONLY valid JSON with these exact fields:
+  const prompt = `Analyze this food image and return ONLY a valid JSON object with these exact fields:
 {
-  "mealName": "string",
-  "calories": number,
-  "protein": number,
-  "carbs": number,
-  "fats": number,
-  "fiber": number,
-  "sugar": number,
-  "confidence": number (0-1)
+  "mealName": "descriptive name of the meal",
+  "calories": <number in kcal>,
+  "protein": <number in grams>,
+  "carbs": <number in grams>,
+  "fats": <number in grams>,
+  "fiber": <number in grams>,
+  "sugar": <number in grams>,
+  "confidence": <number between 0 and 1>
 }
-All numeric values are per serving shown. If no food is detected, return { "error": "no_food" }.`
+Estimate values for one serving as shown in the image.
+If the image does not contain food, return: { "error": "no_food" }`
 
   const result = await model.generateContent([
     { inlineData: { mimeType, data: imageData } },

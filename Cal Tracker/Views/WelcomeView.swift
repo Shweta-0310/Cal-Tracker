@@ -33,8 +33,7 @@ struct WelcomeView: View {
                 Text(quote)
                     .italic().foregroundStyle(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
-                Button("Upload Meal Photo") { showAddMeal = true }
-                    .buttonStyle(.borderedProminent)
+                PrimaryButton(title: "Upload Meal Photo") { showAddMeal = true }
                     .padding(.bottom, 40)
             }
             .padding()

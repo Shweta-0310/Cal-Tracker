@@ -5,6 +5,7 @@ struct AddMealView: View {
     var onConfirm: (() async -> Void)? = nil
 
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var mealStore: MealStore
     @AppStorage("hasLoggedFirstMeal") private var hasLoggedFirstMeal = false
 
     @State private var selectedItem: PhotosPickerItem?
@@ -50,6 +51,7 @@ struct AddMealView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
                 Button("Confirm & Save") {
+                    mealStore.addMeal(result)
                     hasLoggedFirstMeal = true
                     Task {
                         await onConfirm?()

@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import Supabase
 
 @MainActor
 class AuthViewModel: ObservableObject {
@@ -9,56 +8,40 @@ class AuthViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    private let userNameKey = "userName"
+    private let userIDKey = "userID"
+
+    /// Persistent local user ID — generated once, stored forever.
+    static var userID: String {
+        if let existing = UserDefaults.standard.string(forKey: "userID") {
+            return existing
+        }
+        let new = UUID().uuidString
+        UserDefaults.standard.set(new, forKey: "userID")
+        return new
+    }
+
     func checkSession() async {
-        let session = try? await SupabaseManager.shared.auth.session
-        isAuthenticated = session != nil
-        if let meta = session?.user.userMetadata,
-           case .string(let name) = meta["name"] {
-            userName = name
-            UserDefaults.standard.set(name, forKey: "lastUserName")
+        if let saved = UserDefaults.standard.string(forKey: userNameKey), !saved.isEmpty {
+            userName = saved
+            isAuthenticated = true
         }
     }
 
-    // Sign in or sign up using only a name — no password needed from the user.
-    // Email and password are derived internally and never shown.
     func signInWithName(_ name: String) async {
-        isLoading = true; errorMessage = nil
-        let normalized = name.trimmingCharacters(in: .whitespaces).lowercased()
-        let email = "\(normalized)@caltracker.app"
-        let password = "ct_\(normalized)_secret"
-
-        do {
-            // Try existing user first
-            let session = try await SupabaseManager.shared.auth.signIn(
-                email: email, password: password
-            )
-            if case .string(let savedName) = session.user.userMetadata["name"] {
-                userName = savedName
-            } else {
-                userName = name
-            }
-            UserDefaults.standard.set(userName, forKey: "lastUserName")
-            isAuthenticated = true
-        } catch {
-            // New user — sign up
-            do {
-                _ = try await SupabaseManager.shared.auth.signUp(
-                    email: email,
-                    password: password,
-                    data: ["name": .string(name)]
-                )
-                userName = name
-                UserDefaults.standard.set(name, forKey: "lastUserName")
-                isAuthenticated = true
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        }
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        isLoading = true
+        userName = trimmed
+        UserDefaults.standard.set(trimmed, forKey: userNameKey)
+        // Ensure a stable user ID exists
+        _ = AuthViewModel.userID
+        isAuthenticated = true
         isLoading = false
     }
 
     func signOut() async {
-        try? await SupabaseManager.shared.auth.signOut()
+        UserDefaults.standard.removeObject(forKey: userNameKey)
         isAuthenticated = false
         userName = ""
     }

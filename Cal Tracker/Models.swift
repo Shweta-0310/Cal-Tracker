@@ -2,7 +2,7 @@ import Foundation
 
 struct Meal: Identifiable, Codable {
     let id: UUID
-    let userId: UUID
+    let userId: UUID?
     let imageUrl: String?
     let mealName: String?
     let calories: Double
@@ -12,7 +12,7 @@ struct Meal: Identifiable, Codable {
     let fiber: Double
     let sugar: Double
     let loggedAt: Date
-    let createdAt: Date
+    let createdAt: Date?
 
     var others: Double { fiber + sugar }
 
