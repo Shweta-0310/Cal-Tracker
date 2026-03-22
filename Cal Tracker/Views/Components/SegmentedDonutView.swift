@@ -11,29 +11,50 @@ enum MacroColor {
 
 struct SegmentedDonutView: View {
     let totals: NutritionTotals
+    let goals: NutritionTotals
     let mealCount: Int
+
+    // Each macro's % of goal (0–1) — must use the SAME goal divisor as MacroProgressRow in DashboardView
+    private var weights: [Double] {
+        [
+            min(totals.calories / max(goals.calories, 1), 1.0),
+            min(totals.protein  / max(goals.protein,  1), 1.0),
+            min(totals.fats     / max(goals.fats,     1), 1.0),
+            min(totals.carbs    / max(goals.carbs,    1), 1.0),
+            min(totals.others   / max(goals.fiber,    1), 1.0)   // matches DashboardView Others goal
+        ]
+    }
+
+    private var colors: [Color] {
+        [MacroColor.calories, MacroColor.protein, MacroColor.fats, MacroColor.carbs, MacroColor.others]
+    }
+
+    // Precompute (startAngle, endAngle) for each segment outside the view builder
+    // so SwiftUI doesn't have to rely on the mutable-state trick inside ForEach.
+    private var segmentArcs: [(start: Double, end: Double)] {
+        let gap = 5.4           // degrees of gap between segments
+        let totalGap = gap * Double(colors.count)
+        let available = 360.0 - totalGap
+        let weightSum = weights.reduce(0, +)
+
+        var arcs: [(Double, Double)] = []
+        var cursor = -90.0
+        for w in weights {
+            let fraction = weightSum > 0 ? w / weightSum : 1.0 / Double(colors.count)
+            let sweep = fraction * available
+            arcs.append((cursor, cursor + sweep))
+            cursor += sweep + gap
+        }
+        return arcs
+    }
 
     var body: some View {
         ZStack {
-            let segments: [(Double, Color)] = [
-                (totals.calories, MacroColor.calories),
-                (totals.protein,  MacroColor.protein),
-                (totals.fats,     MacroColor.fats),
-                (totals.carbs,    MacroColor.carbs),
-                (totals.others,   MacroColor.others)
-            ]
-            let total = segments.reduce(0.0) { $0 + $1.0 }
+            let arcs = segmentArcs
 
-            let gap = 0.02
-            var startAngle = -90.0
-
-            ForEach(0..<segments.count, id: \.self) { i in
-                let (value, color) = segments[i]
-                let fraction = total > 0 ? value / total : 0.2
-                let sweep = (fraction * (1 - Double(segments.count) * gap)) * 360
-                Arc(startAngle: startAngle, endAngle: startAngle + sweep)
-                    .stroke(color, lineWidth: 24)
-                let _ = { startAngle += sweep + gap * 360 }()
+            ForEach(0..<colors.count, id: \.self) { i in
+                Arc(startAngle: arcs[i].start, endAngle: arcs[i].end)
+                    .stroke(colors[i], lineWidth: 24)
             }
 
             VStack(spacing: 4) {
@@ -76,9 +97,10 @@ extension Color {
 
 #Preview {
     SegmentedDonutView(
-        totals: NutritionTotals(calories: 1800, protein: 120, carbs: 200, fats: 60, fiber: 25, sugar: 30),
-        mealCount: 3
+        totals: NutritionTotals(calories: 560, protein: 32, carbs: 63, fats: 33, fiber: 10, sugar: 15),
+        goals:  NutritionTotals(calories: 2000, protein: 150, carbs: 250, fats: 65, fiber: 25, sugar: 50),
+        mealCount: 1
     )
-    .frame(width: 200, height: 200)
+    .frame(width: 220, height: 220)
     .padding()
 }

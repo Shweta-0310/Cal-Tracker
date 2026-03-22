@@ -38,6 +38,7 @@ export async function createMeal(req: Request, res: Response) {
   try {
     const body = z.object({
       meal_name: z.string().optional(),
+      image_url: z.string().optional(),
       calories: z.number(),
       protein: z.number(),
       carbs: z.number(),
@@ -51,6 +52,7 @@ export async function createMeal(req: Request, res: Response) {
       .insert({
         user_id: req.userId,
         meal_name: body.meal_name,
+        image_url: body.image_url ?? null,
         calories: body.calories,
         protein: body.protein,
         carbs: body.carbs,

@@ -30,10 +30,16 @@ struct WeeklySummaryView: View {
                         weekTotalsCard(weekly)
                     }
                 }
-                .padding()
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
             }
-            .navigationTitle("This Week")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("This Week")
+                        .font(.custom("Georgia-Bold", size: 20))
+                }
+            }
             .task { await load() }
         }
     }
@@ -44,7 +50,8 @@ struct WeeklySummaryView: View {
     private func caloriesBarChart(_ days: [DayAnalytics]) -> some View {
         let maxCalories = days.map(\.totals.calories).max() ?? 1
         VStack(alignment: .leading, spacing: 12) {
-            Text("Calories / Day").font(.headline)
+            Text("Calories / Day")
+                .font(.custom("Georgia-Bold", size: 18))
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(days, id: \.date) { day in
                     VStack(spacing: 4) {
@@ -74,7 +81,8 @@ struct WeeklySummaryView: View {
     private func weekTotalsCard(_ weekly: WeeklyAnalytics) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("7-Day Totals").font(.headline)
+                Text("7-Day Totals")
+                    .font(.custom("Georgia-Bold", size: 18))
                 Spacer()
                 Text("\(weekly.totalMeals) meals").font(.caption).foregroundStyle(.secondary)
             }

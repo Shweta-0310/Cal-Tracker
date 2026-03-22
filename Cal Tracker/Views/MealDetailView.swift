@@ -15,7 +15,8 @@ struct MealDetailView: View {
                     .font(.system(size: 80))
                     .foregroundStyle(.secondary)
 
-                Text(meal.mealName ?? "Meal").font(.title.bold())
+                Text(meal.mealName ?? "Meal")
+                    .font(.custom("Georgia-Bold", size: 28))
 
                 let f = DateFormatter()
                 let _ = { f.dateStyle = .medium; f.timeStyle = .short }()
@@ -38,9 +39,11 @@ struct MealDetailView: View {
 
                 Button("Delete Meal", role: .destructive) { showDeleteConfirm = true }
             }
-            .padding()
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
         }
-        .navigationTitle("Meal Detail")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showEdit) {
             EditMealView(meal: meal) { await onDelete?() }
         }

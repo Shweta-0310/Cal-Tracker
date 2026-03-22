@@ -8,19 +8,19 @@ struct PrimaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            if isLoading {
-                ProgressView()
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 44)
-            } else {
-                Text(title)
-                    .font(.system(size: 20, weight: .semibold))
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 44)
+            Group {
+                if isLoading {
+                    ProgressView().tint(.white)
+                } else {
+                    Text(title)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
             }
+            .frame(maxWidth: .infinity, minHeight: 44)
         }
-        .tint(.black)
-        .buttonStyle(.borderedProminent)
+        .background(Color.black)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .opacity(isLoading || isDisabled ? 0.7 : 1.0)
         .allowsHitTesting(!(isLoading || isDisabled))
     }

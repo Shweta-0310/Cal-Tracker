@@ -1,4 +1,5 @@
 import Foundation
+import Supabase
 
 class APIService {
     static let shared = APIService()
@@ -32,7 +33,8 @@ class APIService {
 
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.setValue(AuthViewModel.userID, forHTTPHeaderField: "X-User-ID")
+        let currentUserID = UserDefaults.standard.string(forKey: "currentUserID") ?? "anonymous"
+        request.setValue(currentUserID, forHTTPHeaderField: "X-User-ID")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if let body {
@@ -77,9 +79,22 @@ class APIService {
                     loggedAt: Date(), createdAt: nil)
     }
 
+    /// Uploads a meal image to Supabase Storage and returns its public URL.
+    func uploadMealImage(_ data: Data) async throws -> String {
+        let currentUserID = UserDefaults.standard.string(forKey: "currentUserID") ?? "anonymous"
+        let path = "\(currentUserID)/\(UUID().uuidString).jpg"
+        try await SupabaseManager.shared.storage
+            .from("meal-images")
+            .upload(path, data: data, options: FileOptions(contentType: "image/jpeg"))
+        let publicURL = try SupabaseManager.shared.storage
+            .from("meal-images")
+            .getPublicURL(path: path)
+        return publicURL.absoluteString
+    }
+
     /// Persists the confirmed meal to Supabase and returns the saved record.
-    func createMeal(from meal: Meal) async throws -> Meal {
-        let body: [String: Any] = [
+    func createMeal(from meal: Meal, imageUrl: String? = nil) async throws -> Meal {
+        var body: [String: Any] = [
             "meal_name": meal.mealName ?? "Meal",
             "calories": meal.calories,
             "protein": meal.protein,
@@ -88,6 +103,7 @@ class APIService {
             "fiber": meal.fiber,
             "sugar": meal.sugar
         ]
+        if let imageUrl { body["image_url"] = imageUrl }
         let data = try await request("/meals", method: "POST", body: body)
         return try APIService.iso.decode(Meal.self, from: data)
     }

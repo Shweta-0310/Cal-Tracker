@@ -19,8 +19,8 @@ struct LoginView: View {
             VStack(spacing: 56) {
                 Spacer()
 
-                Text("Keep You Growing")
-                    .font(.custom("PlayfairDisplay-Bold", size: 36))
+                Text("Keeps You Growing")
+                    .font(.custom("Georgia-Bold", size: 30))
                     .foregroundStyle(.white)
 
                 VStack(spacing: 48) {
@@ -47,7 +47,7 @@ struct LoginView: View {
 
                 Spacer()
             }
-            .padding(.horizontal, 64)
+            .padding(.horizontal, 24)
         }
     }
 }

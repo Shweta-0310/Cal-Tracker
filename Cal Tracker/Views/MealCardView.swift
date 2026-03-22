@@ -28,7 +28,7 @@ struct MealCardView: View {
                 Text(meal.mealName ?? "Meal")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.primary)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .truncationMode(.tail)
 
                 Text("\(Int(meal.calories)) kcal")

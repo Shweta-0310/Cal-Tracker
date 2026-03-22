@@ -6,10 +6,11 @@ struct AddMealView: View {
 
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var mealStore: MealStore
-    @AppStorage("hasLoggedFirstMeal") private var hasLoggedFirstMeal = false
+    @EnvironmentObject var authVM: AuthViewModel
 
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    @State private var selectedImageData: Data?
     @State private var result: Meal?
     @State private var isAnalyzing = false
     @State private var isSaving = false
@@ -59,9 +60,8 @@ struct AddMealView: View {
                     VStack(spacing: 24) {
                         // Meal name
                         Text(result.mealName ?? "Meal")
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.custom("Georgia-Bold", size: 22))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24)
 
                         // Macro progress rows
                         VStack(spacing: 20) {
@@ -71,8 +71,8 @@ struct AddMealView: View {
                             MacroProgressRow(label: "Carbs",    value: result.carbs,    goal: goals.carbs,    color: MacroColor.carbs)
                             MacroProgressRow(label: "Others",   value: result.others,   goal: goals.fiber,    color: MacroColor.others)
                         }
-                        .padding(.horizontal, 24)
                     }
+                    .padding(.horizontal, 24)
                 }
 
                 if let errorMessage {
@@ -84,47 +84,47 @@ struct AddMealView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if result != nil {
-                Button {
-                    Task { await save() }
-                } label: {
-                    if isSaving {
-                        ProgressView()
-                            .tint(.white)
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                    } else {
-                        Text("Confirm and Save")
-                            .font(.system(size: 17, weight: .semibold))
-                            .frame(maxWidth: .infinity, minHeight: 50)
+            VStack(spacing: 0) {
+                if result != nil {
+                    Button {
+                        Task { await save() }
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity, minHeight: 50)
+                        } else {
+                            Text("Confirm and Save")
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(maxWidth: .infinity, minHeight: 50)
+                        }
                     }
-                }
-                .background(Color.black)
-                .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .padding(.horizontal, 24)
-                .padding(.bottom, 8)
-                .disabled(isSaving)
-            } else if selectedImage != nil {
-                Button {
-                    Task { await analyze() }
-                } label: {
-                    if isAnalyzing {
-                        ProgressView()
-                            .tint(.white)
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                    } else {
-                        Text("Analyze Meal")
-                            .font(.system(size: 17, weight: .semibold))
-                            .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(Color.black)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .disabled(isSaving)
+                } else if selectedImage != nil {
+                    Button {
+                        Task { await analyze() }
+                    } label: {
+                        if isAnalyzing {
+                            ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity, minHeight: 50)
+                        } else {
+                            Text("Analyze Meal")
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(maxWidth: .infinity, minHeight: 50)
+                        }
                     }
+                    .background(Color.black)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .disabled(isAnalyzing)
                 }
-                .background(Color.black)
-                .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .padding(.horizontal, 24)
-                .padding(.bottom, 8)
-                .disabled(isAnalyzing)
             }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 8)
         }
     }
 
@@ -133,6 +133,7 @@ struct AddMealView: View {
               let jpeg = image.jpegData(compressionQuality: 0.7) else { return }
         isAnalyzing = true
         errorMessage = nil
+        selectedImageData = jpeg
         do {
             result = try await APIService.shared.analyzeMeal(imageData: jpeg, mimeType: "image/jpeg")
         } catch {
@@ -146,9 +147,18 @@ struct AddMealView: View {
         isSaving = true
         errorMessage = nil
         do {
-            let saved = try await APIService.shared.createMeal(from: draft)
+            var uploadedUrl: String? = nil
+            if let data = selectedImageData {
+                do {
+                    uploadedUrl = try await APIService.shared.uploadMealImage(data)
+                } catch {
+                    print("Image upload failed: \(error)")
+                    // Continue saving meal without image
+                }
+            }
+            let saved = try await APIService.shared.createMeal(from: draft, imageUrl: uploadedUrl)
             mealStore.addMeal(saved)
-            hasLoggedFirstMeal = true
+            authVM.markFirstMealLogged()
             await onConfirm?()
             dismiss()
         } catch {
@@ -161,4 +171,5 @@ struct AddMealView: View {
 #Preview("Empty State") {
     AddMealView()
         .environmentObject(MealStore())
+        .environmentObject(AuthViewModel())
 }

@@ -11,7 +11,7 @@ struct WelcomeView: View {
                 Image(systemName: "chevron.left")
                     .foregroundStyle(.primary)
                 Text("Today")
-                    .font(.headline)
+                    .font(.custom("Georgia-Bold", size: 20))
                 Image(systemName: "chevron.right")
                     .foregroundStyle(.primary)
             }
@@ -41,7 +41,7 @@ struct WelcomeView: View {
 
             Spacer()
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 24)
         .safeAreaInset(edge: .bottom) {
             Button("Upload Meal Photo") { showAddMeal = true }
                 .font(.system(size: 17, weight: .semibold))
@@ -49,7 +49,7 @@ struct WelcomeView: View {
                 .background(Color.black)
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
-                .padding(.horizontal)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 8)
         }
         .sheet(isPresented: $showAddMeal) {

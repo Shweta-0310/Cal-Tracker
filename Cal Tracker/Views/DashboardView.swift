@@ -7,6 +7,7 @@ struct DashboardView: View {
     @State private var showAddMeal = false
     @State private var showSettings = false
     @State private var showWeekly = false
+    @State private var showLogoutConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -17,7 +18,8 @@ struct DashboardView: View {
                         Button { vm.goToPreviousDay() } label: {
                             Image(systemName: "chevron.left")
                         }
-                        Text(vm.dateLabel).font(.headline)
+                        Text(vm.dateLabel)
+                            .font(.custom("Georgia-Bold", size: 20))
                         Button { vm.goToNextDay() } label: {
                             Image(systemName: "chevron.right")
                         }
@@ -26,7 +28,7 @@ struct DashboardView: View {
 
                     // Donut chart + Macro progress rows
                     VStack(spacing: 56) {
-                        SegmentedDonutView(totals: vm.totals, mealCount: vm.mealCount)
+                        SegmentedDonutView(totals: vm.totals, goals: vm.goals, mealCount: vm.mealCount)
                             .frame(width: 220, height: 220)
 
                         VStack(spacing: 20) {
@@ -58,6 +60,22 @@ struct DashboardView: View {
                 .padding(.horizontal, 24)
             }
             .toolbar(.hidden, for: .navigationBar)
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    showLogoutConfirm = true
+                } label: {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.primary)
+                        .padding(12)
+                }
+            }
+            .confirmationDialog("Sign out?", isPresented: $showLogoutConfirm, titleVisibility: .visible) {
+                Button("Sign Out", role: .destructive) {
+                    Task { await authVM.signOut() }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
             .task { await vm.load() }
             .onChange(of: vm.currentDate) { _, _ in
                 Task { await vm.load() }

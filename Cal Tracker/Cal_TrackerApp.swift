@@ -4,14 +4,13 @@ import SwiftUI
 struct Cal_TrackerApp: App {
     @StateObject private var authVM = AuthViewModel()
     @StateObject private var mealStore = MealStore()
-    @AppStorage("hasLoggedFirstMeal") private var hasLoggedFirstMeal = false
 
     var body: some Scene {
         WindowGroup {
             Group {
                 if !authVM.isAuthenticated {
                     LoginView()
-                } else if !hasLoggedFirstMeal {
+                } else if !authVM.hasLoggedFirstMeal {
                     WelcomeView()
                 } else {
                     DashboardView()
