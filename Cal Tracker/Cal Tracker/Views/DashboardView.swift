@@ -5,6 +5,7 @@ struct DashboardView: View {
     @EnvironmentObject var mealStore: MealStore
     @StateObject private var vm = DashboardViewModel()
     @State private var showAddMeal = false
+    @State private var newMealIDs: Set<UUID> = []
 
     var body: some View {
         NavigationStack {
@@ -12,7 +13,7 @@ struct DashboardView: View {
                 VStack(spacing: 0) {
                     topCard
                     dailyMealSection
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 16)
                         .padding(.top, 40)
                         .padding(.bottom, 16)
                 }
@@ -26,10 +27,17 @@ struct DashboardView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .task { await vm.load() }
-            .onChange(of: vm.currentDate) { _, _ in Task { await vm.load() } }
+            .onChange(of: vm.currentDate) { _, _ in
+                newMealIDs = []
+                Task { await vm.load() }
+            }
             .safeAreaInset(edge: .bottom) { uploadButton }
             .sheet(isPresented: $showAddMeal) {
-                UploadMealSheetView(onConfirm: { await vm.load() })
+                UploadMealSheetView(onConfirm: {
+                    let previousIDs = Set(vm.meals.map(\.id))
+                    await vm.load()
+                    newMealIDs = Set(vm.meals.map(\.id)).subtracting(previousIDs)
+                })
             }
         }
     }
@@ -150,6 +158,7 @@ struct DashboardView: View {
                         MealCardView(
                             meal: meal,
                             localImage: mealStore.mealImages[meal.id],
+                            isNew: newMealIDs.contains(meal.id),
                             onDelete: {
                                 try? await APIService.shared.deleteMeal(id: meal.id)
                                 mealStore.removeImage(for: meal.id)

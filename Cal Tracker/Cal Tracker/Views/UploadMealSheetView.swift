@@ -175,11 +175,15 @@ struct UploadMealSheetView: View {
             } else {
                 // Empty / pre-analysis state
                 Group {
-                    Image("bowl-illustration")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 82, height: 69)
-                        .opacity(0.5)
+                    if isAnalyzing {
+                        AIAnalyzingText()
+                    } else {
+                        Image("bowl-illustration")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 82, height: 69)
+                            .opacity(0.5)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -274,6 +278,58 @@ private struct ShimmerOverlay: View {
             withAnimation(.linear(duration: 1.3).repeatForever(autoreverses: false)) {
                 move = true
             }
+        }
+    }
+}
+
+// MARK: - AIAnalyzingText
+
+private struct AIAnalyzingText: View {
+    private let messages = [
+        "Analysing with AI",
+        "It might take some time",
+        "Hold on tight",
+        "We're almost here..."
+    ]
+    @State private var displayedText = ""
+    @State private var messageIndex = 0
+    @State private var textOpacity: Double = 1.0
+
+    var body: some View {
+        Text(displayedText)
+            .font(.custom("DMSans-Regular", size: 16))
+            .tracking(-0.64)
+            .foregroundStyle(Color(hex: "#777777"))
+            .multilineTextAlignment(.center)
+            .opacity(textOpacity)
+            .task { await runLoop() }
+    }
+
+    private func runLoop() async {
+        while true {
+            let message = messages[messageIndex]
+
+            // Type out character by character
+            for i in message.indices {
+                guard !Task.isCancelled else { return }
+                displayedText = String(message[message.startIndex...i])
+                try? await Task.sleep(nanoseconds: 48_000_000) // ~48ms per char
+            }
+
+            // Hold the full message
+            try? await Task.sleep(nanoseconds: 1_400_000_000)
+
+            // Fade out
+            withAnimation(.easeInOut(duration: 0.35)) { textOpacity = 0 }
+            try? await Task.sleep(nanoseconds: 380_000_000)
+
+            // Advance and reset
+            messageIndex = (messageIndex + 1) % messages.count
+            displayedText = ""
+
+            // Fade in, then start typing next
+            withAnimation(.easeInOut(duration: 0.25)) { textOpacity = 1 }
+            try? await Task.sleep(nanoseconds: 250_000_000)
         }
     }
 }

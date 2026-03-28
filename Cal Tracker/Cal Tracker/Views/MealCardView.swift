@@ -3,6 +3,7 @@ import SwiftUI
 struct MealCardView: View {
     let meal: Meal
     var localImage: UIImage? = nil
+    var isNew: Bool = false
     var onDelete: (() async -> Void)? = nil
 
     @State private var showDeleteConfirm = false
@@ -71,9 +72,10 @@ struct MealCardView: View {
         .padding(8)
         .background(Color(hex: "#fffcf5"))
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : 18)
+        .opacity(!isNew || appeared ? 1 : 0)
+        .offset(y: !isNew || appeared ? 0 : 80)
         .onAppear {
+            guard isNew else { return }
             withAnimation(.easeOut(duration: 0.4)) {
                 appeared = true
             }
