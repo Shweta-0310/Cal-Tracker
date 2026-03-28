@@ -92,7 +92,6 @@ struct DashboardView: View {
     @ViewBuilder private var donutRing: some View {
         SegmentedDonutView(
             totals: vm.totals,
-            goals: vm.goals,
             mealCount: vm.mealCount
         )
         .frame(width: 166.5, height: 166.5)
