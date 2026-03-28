@@ -19,6 +19,9 @@ struct Cal_TrackerApp: App {
             .environmentObject(authVM)
             .environmentObject(mealStore)
             .task { await authVM.checkSession() }
+            .onOpenURL { url in
+                Task { await authVM.handleAuthCallback(url: url) }
+            }
         }
     }
 }

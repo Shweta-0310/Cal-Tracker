@@ -2,10 +2,14 @@ import SwiftUI
 
 struct MealCardView: View {
     let meal: Meal
+    var localImage: UIImage? = nil
+    var onDelete: (() async -> Void)? = nil
+
+    @State private var showDeleteConfirm = false
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Meal image
+        HStack(alignment: .top, spacing: 16) {
+            // 75×75 meal image
             Group {
                 if let urlString = meal.imageUrl, let url = URL(string: urlString) {
                     AsyncImage(url: url) { phase in
@@ -13,48 +17,91 @@ struct MealCardView: View {
                         case .success(let image):
                             image.resizable().scaledToFill()
                         default:
-                            fallbackIcon
+                            if let local = localImage {
+                                Image(uiImage: local).resizable().scaledToFill()
+                            } else {
+                                fallbackIcon
+                            }
                         }
                     }
+                } else if let local = localImage {
+                    Image(uiImage: local).resizable().scaledToFill()
                 } else {
                     fallbackIcon
                 }
             }
-            .frame(width: 100, height: 100)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .frame(width: 75, height: 75)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            // Meal info
-            VStack(alignment: .leading, spacing: 6) {
-                Text(meal.mealName ?? "Meal")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+            // Info column
+            VStack(alignment: .leading, spacing: 10) {
+                // Meal name + X button
+                HStack(alignment: .center) {
+                    Text(meal.mealName ?? "Meal")
+                        .font(.custom("DMSans-Regular", size: 18))
+                        .tracking(-0.32)
+                        .foregroundStyle(.black)
+                        .lineLimit(1)
+                    Spacer()
+                    Button {
+                        showDeleteConfirm = true
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color(hex: "#161616"))
+                            .frame(width: 16, height: 16)
+                    }
+                }
 
-                Text("\(Int(meal.calories)) kcal")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.primary)
-
-                Spacer().frame(height: 2)
-
-                Text("P: \(Int(meal.protein))g    C: \(Int(meal.carbs))g    F: \(Int(meal.fats))g")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.primary)
+                // Macro grid: 2 rows × 2 columns
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        macroChip(color: MacroColor.calories, label: "Cal",  value: "\(Int(meal.calories)) kcal")
+                        macroChip(color: MacroColor.protein,  label: "Pro",  value: "\(Int(meal.protein)) g")
+                    }
+                    HStack(spacing: 6) {
+                        macroChip(color: MacroColor.fats,  label: "Fats",  value: "\(Int(meal.fats)) g")
+                        macroChip(color: MacroColor.carbs, label: "Carbs", value: "\(Int(meal.carbs)) g")
+                    }
+                }
             }
-
-            Spacer()
+            .frame(maxWidth: .infinity)
         }
-        .padding(16)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(8)
+        .background(Color(hex: "#fffcf5"))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .confirmationDialog("Delete this meal?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task { await onDelete?() }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    @ViewBuilder
+    private func macroChip(color: Color, label: String, value: String) -> some View {
+        HStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(color)
+                .frame(width: 8, height: 8)
+            HStack(spacing: 0) {
+                Text("\(label): ")
+                    .foregroundStyle(Color(hex: "#777777"))
+                Text(value)
+                    .foregroundStyle(Color(hex: "#161616"))
+            }
+            .font(.custom("DMSans-Regular", size: 15))
+            .tracking(-0.56)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var fallbackIcon: some View {
         ZStack {
-            Color(.systemGray5)
+            Color(hex: "#f7f1e8")
             Image(systemName: "fork.knife")
-                .font(.system(size: 32))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 24))
+                .foregroundStyle(Color(hex: "#777777"))
         }
     }
 }
@@ -64,15 +111,16 @@ struct MealCardView: View {
         id: UUID(),
         userId: UUID(),
         imageUrl: nil,
-        mealName: "Grilled Chicken & Rice",
-        calories: 550,
-        protein: 45,
+        mealName: "Paratha with Curd",
+        calories: 450,
+        protein: 12,
         carbs: 55,
-        fats: 12,
+        fats: 18,
         fiber: 4,
         sugar: 2,
         loggedAt: Date(),
         createdAt: Date()
     ))
     .padding()
+    .background(Color(hex: "#f7f1e8"))
 }

@@ -157,7 +157,7 @@ struct AddMealView: View {
                 }
             }
             let saved = try await APIService.shared.createMeal(from: draft, imageUrl: uploadedUrl)
-            mealStore.addMeal(saved)
+            mealStore.addMeal(saved, image: selectedImage)
             authVM.markFirstMealLogged()
             await onConfirm?()
             dismiss()

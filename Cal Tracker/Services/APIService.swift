@@ -26,12 +26,12 @@ class APIService {
         return f
     }()
 
-    private func request(_ path: String, method: String = "GET", body: [String: Any]? = nil) async throws -> Data {
+    private func request(_ path: String, method: String = "GET", body: [String: Any]? = nil, timeout: TimeInterval = 30) async throws -> Data {
         guard let url = URL(string: Config.apiBaseURL + path) else {
             throw URLError(.badURL)
         }
 
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = method
         let currentUserID = UserDefaults.standard.string(forKey: "currentUserID") ?? "anonymous"
         request.setValue(currentUserID, forHTTPHeaderField: "X-User-ID")
@@ -69,7 +69,7 @@ class APIService {
             "imageData": imageData.base64EncodedString(),
             "mimeType": mimeType
         ]
-        let data = try await request("/meals/analyze", method: "POST", body: body)
+        let data = try await request("/meals/analyze", method: "POST", body: body, timeout: 120)
         let r = try APIService.iso.decode(AnalyzeResponse.self, from: data)
         // Build a temporary Meal for display (no real ID/date yet)
         return Meal(id: UUID(), userId: nil, imageUrl: nil,

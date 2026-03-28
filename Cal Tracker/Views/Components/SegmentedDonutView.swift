@@ -1,12 +1,12 @@
 import SwiftUI
 
-// Shared macro color palette — used by both the donut and progress rows
+// Shared macro color palette
 enum MacroColor {
-    static let calories = Color(hex: "#7B68EE")
-    static let protein  = Color(hex: "#5BC8D5")
-    static let fats     = Color(hex: "#F06292")
-    static let carbs    = Color(hex: "#FFAA5C")
-    static let others   = Color(hex: "#FFD166")
+    static let calories = Color(hex: "#fdccaf")
+    static let protein  = Color(hex: "#ffb1ec")
+    static let fats     = Color(hex: "#beefff")
+    static let carbs    = Color(hex: "#bfbeff")
+    static let others   = Color(hex: "#d4d4d4")
 }
 
 struct SegmentedDonutView: View {
@@ -50,17 +50,25 @@ struct SegmentedDonutView: View {
 
     var body: some View {
         ZStack {
-            let arcs = segmentArcs
-
-            ForEach(0..<colors.count, id: \.self) { i in
-                Arc(startAngle: arcs[i].start, endAngle: arcs[i].end)
-                    .stroke(colors[i], lineWidth: 24)
+            if mealCount == 0 {
+                Circle()
+                    .stroke(Color(red: 0.9, green: 0.89, blue: 0.88), lineWidth: 10)
+            } else {
+                let arcs = segmentArcs
+                ForEach(0..<colors.count, id: \.self) { i in
+                    Arc(startAngle: arcs[i].start, endAngle: arcs[i].end)
+                        .stroke(colors[i], style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                }
             }
 
-            VStack(spacing: 4) {
-                Text(String(format: "%02d", mealCount))
-                    .font(.system(size: 40, weight: .regular))
-                Text("Total Meal").font(.system(size: 14)).foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                Text("\(mealCount)")
+                    .font(.custom("DMSans-Regular", size: 32))
+                    .foregroundStyle(Color(hex: "#161616"))
+                Text("Total Meal")
+                    .font(.custom("DMSans-Regular", size: 16))
+                    .foregroundStyle(Color(hex: "#161616"))
+                    .tracking(-0.32)
             }
         }
     }
